@@ -29,9 +29,33 @@ The blob floats around and listens to your queries. After you speak:
 
 ---
 
-## 🚀 Getting Started
+## 🛠 How It Works
 
-1. **Clone the repository**
+1. Voice Recognition: Uses the browser’s SpeechRecognition API.
+2. Text-to-Speech: Uses the browser’s SpeechSynthesis API to speak answers.
+3. Math Evaluation: Parses and calculates arithmetic expressions in natural language.
+4. Wikipedia API: Fetches short summaries for general knowledge questions.
+5. Local Storage: Saves Q&A pairs to allow review of conversation history.
 
-```bash
-git clone https://github.com/rohit-joshi-01/Jarvis.git
+---
+
+##🙌 Contributing
+
+Contributions are welcome! You can:
+- Improve the blob’s animation or UI
+- Add more voice commands
+- Integrate new APIs (like weather, news, or jokes)
+- Enhance math parsing or natural language understanding
+
+---
+
+## ⚠ Browser Support
+
+- Best experience in Google Chrome.
+- Requires microphone access.
+- May not work fully in Safari or Firefox for voice recognition.
+
+
+---
+<h4 align="center"> Author : ROHIT JOSHI </h4>h4>
+===
