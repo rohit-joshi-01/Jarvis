@@ -2,7 +2,7 @@
 
 A **fun, interactive AI assistant** in the form of a colorful floating blob! 🟣 This web-based AI assistant listens to your voice commands, answers questions, performs math calculations, fetches Wikipedia summaries, and even remembers past conversations in your browser.  
 
-Built using **HTML, CSS, and JavaScript**, this project combines animation, voice recognition, and local storage to create an engaging AI experience.
+Built using **HTML and CSS**, this project combines animation, voice recognition, and local storage to create an engaging AI experience.
 
 ---
 
@@ -39,7 +39,7 @@ The blob floats around and listens to your queries. After you speak:
 
 ---
 
-##🙌 Contributing
+## 🙌 Contributing
 
 Contributions are welcome! You can:
 - Improve the blob’s animation or UI
@@ -57,5 +57,7 @@ Contributions are welcome! You can:
 
 
 ---
-<h4 align="center"> Author : ROHIT JOSHI </h4>h4>
+
+<h4 align="center"> Author : ROHIT JOSHI </h4>
+
 ===
