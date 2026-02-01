@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart AI Blob with Memory</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #141426;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: #f0f0f0;
+    }
+
+    .blob-wrapper {
+      position: relative;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .blob {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%,
+        rgba(150, 100, 255, 0.95),
+        rgba(110, 70, 240, 0.85),
+        rgba(90, 40, 230, 0.8));
+      box-shadow: 0 0 30px rgba(150, 100, 255, 0.5), 0 0 60px rgba(100, 50, 220, 0.3);
+      position: relative;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .eyes {
+      position: absolute;
+      top: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 30px;
+    }
+
+    .eye {
+      width: 36px;
+      height: 44px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .pupil {
+      width: 12px;
+      height: 12px;
+      background: black;
+      border-radius: 50%;
+      transition: transform 0.1s;
+    }
+
+    .mouth {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 30px;
+      background: black;
+      border-radius: 0 0 50% 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .mouth.talking {
+      animation: talk 0.25s infinite alternate;
+    }
+
+    @keyframes talk {
+      0% { transform: translateX(-50%) scaleY(1); }
+      100% { transform: translateX(-50%) scaleY(0.3); }
+    }
+
+    .chat-box {
+      position: absolute;
+      bottom: 40px;
+      max-width: 320px;
+      padding: 20px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .mic-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: #6a40ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(106, 64, 255, 0.5);
+      transition: transform 0.2s;
+    }
+
+    .mic-button:active {
+      transform: scale(0.95);
+    }
+
+    .mic-button img {
+      width: 28px;
+      filter: invert(1);
+    }
+
+    .history-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      color: #333;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="blob-wrapper">
+    <div class="blob">
+      <div class="eyes">
+        <div class="eye"><div class="pupil"></div></div>
+        <div class="eye"><div class="pupil"></div></div>
+      </div>
+      <div class="mouth" id="mouth"></div>
+    </div>
+  </div>
+
+  <div class="chat-box" id="chatBox">Hi! Click the mic and ask me anything.</div>
+  <div class="mic-button" id="micButton">
+    <img src="https://img.icons8.com/ios-filled/50/microphone.png" alt="Mic">
+  </div>
+  <button class="history-button" onclick="alert(loadHistory())">📜 History</button>
+
+  <script>
+    const pupils = document.querySelectorAll('.pupil');
+    const mouth = document.getElementById('mouth');
+    const chatBox = document.getElementById('chatBox');
+    const micButton = document.getElementById('micButton');
+
+    // Eye tracking
+    document.addEventListener('mousemove', (e) => {
+      pupils.forEach(pupil => {
+        const rect = pupil.getBoundingClientRect();
+        const dx = e.clientX - (rect.left + rect.width / 2);
+        const dy = e.clientY - (rect.top + rect.height / 2);
+        const angle = Math.atan2(dy, dx);
+        const radius = 6;
+        pupil.style.transform = `translate(${Math.cos(angle)*radius}px, ${Math.sin(angle)*radius}px)`;
+      });
+    });
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.onstart = () => mouth.classList.add('talking');
+      utter.onend = () => mouth.classList.remove('talking');
+      speechSynthesis.speak(utter);
+    }
+
+    function isMath(query) {
+      return /^[\d\s+\-*/().]+$/.test(query);
+    }
+
+    function calcMath(query) {
+      try {
+        const clean = query
+          .toLowerCase()
+          .replace(/plus/g, '+')
+          .replace(/minus/g, '-')
+          .replace(/times|multiplied by/g, '*')
+          .replace(/divided by|over/g, '/');
+        if (!isMath(clean)) return null;
+        return Function('"use strict"; return (' + clean + ')')();
+      } catch {
+        return null;
+      }
+    }
+
+    async function fetchWiki(query) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&titles=${encodeURIComponent(query)}&exintro=1&explaintext=1&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const page = Object.values(data.query.pages)[0];
+      return page.extract || "Sorry, I couldn't find anything about that.";
+    }
+
+    function saveToLocalMemory(question, answer) {
+      const history = JSON.parse(localStorage.getItem('qa_history')) || [];
+      history.unshift({ question, answer }); // most recent first
+      localStorage.setItem('qa_history', JSON.stringify(history));
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('qa_history')) || [];
+      if (!history.length) return "No history found.";
+      return history.map(item => `Q: ${item.question}\nA: ${item.answer}`).join('\n\n');
+    }
+
+    function listen() {
+      const recog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recog.lang = 'en-US';
+      recog.start();
+
+      chatBox.innerText = "Listening... 🎤";
+
+      recog.onresult = async (event) => {
+        const query = event.results[0][0].transcript;
+        chatBox.innerHTML = `You said: <strong>${query}</strong>`;
+
+        let finalAnswer = "";
+
+        const mathResult = calcMath(query);
+        if (mathResult !== null) {
+          finalAnswer = `The answer is ${mathResult}`;
+          chatBox.innerHTML += `<br><br><strong>${finalAnswer}</strong>`;
+          speak(finalAnswer);
+          saveToLocalMemory(query, finalAnswer);
+          return;
+        }
+
+        const summary = await fetchWiki(query);
+        finalAnswer = summary.split('. ').slice(0, 2).join('. ') + '.';
+        chatBox.innerHTML += `<br><br><strong>${finalAnswer}</strong>`;
+        speak(finalAnswer);
+        saveToLocalMemory(query, finalAnswer);
+      };
+
+      recog.onerror = () => {
+        chatBox.innerText = "Oops! Couldn't hear you. Try again.";
+        speak("Sorry, I didn't catch that.");
+      };
+    }
+
+    micButton.addEventListener('click', listen);
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+  console.log('Speech Recognition not supported in this browser.');
+} else {
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US'; // You can set to 'hi-IN' for Hindi
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    console.log('🎙️ Listening...');
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    console.log('You said:', transcript);
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+  };
+
+  recognition.onend = () => {
+    console.log('Speech recognition ended.');
+  };
+
+  // Start recognition
+  recognition.start();
+}
+
+  </script>
+</body>
+</html>
